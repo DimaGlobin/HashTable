@@ -8,8 +8,14 @@
 
 #define HashSize 10
 
+typedef struct String{
+
+    const char* str;
+    int counter;
+}String;
+
 typedef struct Node {
-    const char* data;
+    String data;
     struct Node* next;
     struct Node* prev;
 } Node ;
@@ -52,6 +58,10 @@ void Hash_Insert(HashTable* Hash, const char* str){
     Node* new_str = NULL;
     if(SearchNum == NULL)
         new_str = Insert(str, Hash -> Table[Hash_Num]);
+    else {
+        SearchNum->data.counter++;
+        fprintf(stderr, "We FOUND (%s) as (%s), Counter NOW = %d\n", str, SearchNum->data.str, SearchNum->data.counter);
+    }
 
     fprintf(stderr, "new_str: 0x%p\n", new_str);
 }
@@ -61,9 +71,10 @@ Node* ListSearch(Node* head, const char* str){
     fprintf(stderr, "Search elem: 0x%p\n", elem);
 
     while (elem != NULL){
-        fprintf(stderr, "Searching elem: 0x%p, Sring: (%s), elem -> data: (%s)\n", elem, str, elem -> data);
+        fprintf(stderr, "Searching elem: 0x%p, Sring: (%s), elem -> data: (%s), counter = %d\n",
+                elem, str, elem -> data.str, elem -> data.counter);
 
-        if(strcmp(str, elem -> data) == 0) {
+        if(strcmp(str, elem -> data.str) == 0) {
             fprintf(stderr, "Found: (%s)\n", str);
             return elem;
         }
@@ -86,7 +97,8 @@ Node* Insert(const char* new_data, Node* elem){
     $$( new_elem = calloc(sizeof(Node), 1) );
     $$ (assert(new_elem != 0));
 
-    $$ (new_elem -> data = new_data );
+    $$ (new_elem -> data.str = new_data );
+    $$ (new_elem -> data.counter = 1 );
 
     $$ (if(elem == NULL)
             return new_elem;)
@@ -108,7 +120,7 @@ Node* Insert(const char* new_data, Node* elem){
 }
 
 const char* DelNode(Node* elem){
-    const char* SaveData = elem -> data;
+    const char* SaveData = elem -> data.str;
 
     if(elem -> prev != NULL)
         elem -> prev -> next = elem -> next;
@@ -123,7 +135,7 @@ const char* DelNode(Node* elem){
 void NodeDump(Node* elem){
     fprintf(stderr, "Node [0x%p] {\n", elem);
     if(elem != 0) {
-        fprintf(stderr, "Data: %s\n", elem->data);
+        fprintf(stderr, "Data: %s, Counter: %d\n", elem->data.str, elem -> data.counter);
         fprintf(stderr, "Next: 0x%p\n", elem->next);
         fprintf(stderr, "Prev: 0x%p\n", elem->prev);
     }
@@ -143,12 +155,54 @@ void ListDump(Node* head){
     fprintf(stderr, "}\n\n");
 }
 
+void Print_Hash_Data(Node* head){
+    Node* elem = head;
+    int i = 0;
+    while (elem != NULL){
+        if(strcmp(elem -> data.str, "*") != 0) {
+            fprintf(stderr, "Data: %s, Counter: %d\n", elem->data.str, elem -> data.counter);
+        }
+        elem = elem -> next;
+        i++;
+    }
+}
+
+void Print_Unique(Node* head){
+    Node* elem = head;
+    int i = 0;
+    while (elem != NULL){
+        if(strcmp(elem -> data.str, "*") != 0 && elem->data.counter == 1) {
+            fprintf(stderr, "Data: %s, Counter: %d\n", elem->data.str, elem -> data.counter);
+        }
+        elem = elem -> next;
+        i++;
+    }
+}
+
+void Print_Hash_Table(HashTable* Hash){
+
+    fprintf(stderr, "\nBegin print ----------------\n");
+    for(int i = 0; i < HashSize; i++){
+        Print_Unique(Hash -> Table[i]);
+    }
+    fprintf(stderr, "End print ----------------\n");
+}
+
 int main() {
     $ HashTable Hash = {};
     $$(Hash_Ctor(&Hash); )
     $$(Hash_Insert(&Hash, "Dima"); )
     $$(Hash_Insert(&Hash, "Dima"); )
+    $$(Hash_Insert(&Hash, "Dima"); )
     $$(Hash_Insert(&Hash, "Anton"); )
     $$(Hash_Insert(&Hash, "Ded"); )
+    $$(Hash_Insert(&Hash, "Serega"); )
+    $$(Hash_Insert(&Hash, "Ded"); )
+    $$(Hash_Insert(&Hash, "Lexa"); )
+    $$(Hash_Insert(&Hash, "Serega"); )
+    $$(Hash_Insert(&Hash, "Ded"); )
+    $$(Hash_Insert(&Hash, "Danya"); )
+
+    $$(Print_Hash_Table(&Hash);)
     return 0;
 }
